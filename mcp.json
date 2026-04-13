@@ -1,0 +1,14 @@
+{
+  "mcpServers": {
+    "macrofactor": {
+      "command": "node",
+      "args": ["/absolute/path/to/MacroFactor-workout-mcp/dist/server.js"],
+      "env": {
+        "MACROFACTOR_EMAIL": "you@example.com",
+        "MACROFACTOR_PASSWORD": "yourpassword",
+        "FIREBASE_API_KEY": "AIzaSy...",
+        "FIREBASE_PROJECT_ID": "sbs-diet-app"
+      }
+    }
+  }
+}
