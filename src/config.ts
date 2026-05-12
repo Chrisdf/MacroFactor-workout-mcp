@@ -1,6 +1,6 @@
 import 'dotenv/config';
 
-export type Backend = 'firebase' | 'rest';
+export type Backend = 'firebase' | 'rest' | 'mock';
 
 export interface AppConfig {
   backend: Backend;
@@ -36,8 +36,8 @@ export function getConfig(): AppConfig {
     );
   } else if (backend === 'rest') {
     requireEnv('REST_API_BASE_URL', 'REST_API_TOKEN');
-  } else {
-    throw new Error(`Unknown API_BACKEND value: "${backend}". Must be "firebase" or "rest".`);
+  } else if (backend !== 'mock') {
+    throw new Error(`Unknown API_BACKEND value: "${backend}". Must be "firebase", "rest", or "mock".`);
   }
 
   return {

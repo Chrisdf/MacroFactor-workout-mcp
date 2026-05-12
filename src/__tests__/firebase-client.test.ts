@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach, type MockedFunction } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { FirebaseWorkoutClient, FirebaseAuthError, FirebaseNotFoundError, FirebaseError } from '../client/firebase.js';
 import type { FirebaseConfig } from '../client/firebase.js';
 
@@ -70,6 +70,12 @@ function authFail() {
   return { ok: false, status: 401, body: { error: { code: 401, message: 'Unauthorized' } } };
 }
 
+// vi.fn() without explicit generics types .mock.calls as [] (empty tuple).
+// Cast through unknown[][] so we can index into it without TS errors.
+function calls(m: ReturnType<typeof vi.fn>): unknown[][] {
+  return m.mock.calls as unknown[][];
+}
+
 // ── Tests ─────────────────────────────────────────────────────────────────────
 
 describe('FirebaseWorkoutClient — auth', () => {
@@ -84,7 +90,7 @@ describe('FirebaseWorkoutClient — auth', () => {
     await client.listWorkouts();
 
     expect(fetchMock).toHaveBeenCalledTimes(2);
-    const [authUrl] = (fetchMock as MockedFunction<typeof fetch>).mock.calls[0] as [string];
+    const authUrl = calls(fetchMock)[0][0] as string;
     expect(authUrl).toContain('signInWithPassword');
     expect(authUrl).toContain('test-api-key');
   });
@@ -151,9 +157,7 @@ describe('FirebaseWorkoutClient — listWorkouts', () => {
     const client = new FirebaseWorkoutClient(cfg);
     await client.listWorkouts({ limit: 5 });
 
-    const [, firestoreUrl] = (fetchMock as MockedFunction<typeof fetch>).mock.calls.map(
-      ([url]) => url as string
-    );
+    const firestoreUrl = calls(fetchMock)[1][0] as string;
     expect(firestoreUrl).toContain('pageSize=5');
   });
 
@@ -164,9 +168,7 @@ describe('FirebaseWorkoutClient — listWorkouts', () => {
     const client = new FirebaseWorkoutClient(cfg);
     await client.listWorkouts({ startAfter: 'cursor-token' });
 
-    const [, firestoreUrl] = (fetchMock as MockedFunction<typeof fetch>).mock.calls.map(
-      ([url]) => url as string
-    );
+    const firestoreUrl = calls(fetchMock)[1][0] as string;
     expect(firestoreUrl).toContain('pageToken=cursor-token');
   });
 });
@@ -183,9 +185,7 @@ describe('FirebaseWorkoutClient — getWorkout', () => {
     const workout = await client.getWorkout('wk1');
 
     expect(workout.id).toBe('wk1');
-    const [, firestoreUrl] = (fetchMock as MockedFunction<typeof fetch>).mock.calls.map(
-      ([url]) => url as string
-    );
+    const firestoreUrl = calls(fetchMock)[1][0] as string;
     expect(firestoreUrl).toContain('/workouts/wk1');
   });
 
@@ -210,9 +210,10 @@ describe('FirebaseWorkoutClient — createWorkout', () => {
     });
 
     expect(workout.id).toBe('new-uuid');
-    const [, [firestoreUrl, opts]] = (fetchMock as MockedFunction<typeof fetch>).mock.calls;
-    expect(String(firestoreUrl)).toContain('/workouts?documentId=');
-    expect((opts as RequestInit).method).toBe('POST');
+    const firestoreUrl = calls(fetchMock)[1][0] as string;
+    const opts = calls(fetchMock)[1][1] as RequestInit;
+    expect(firestoreUrl).toContain('/workouts?documentId=');
+    expect(opts.method).toBe('POST');
   });
 });
 
@@ -225,10 +226,11 @@ describe('FirebaseWorkoutClient — updateWorkout', () => {
     const client = new FirebaseWorkoutClient(cfg);
     await client.updateWorkout('wk1', { name: 'Updated Name' });
 
-    const [, [firestoreUrl, opts]] = (fetchMock as MockedFunction<typeof fetch>).mock.calls;
-    expect(String(firestoreUrl)).toContain('/workouts/wk1');
-    expect(String(firestoreUrl)).toContain('updateMask.fieldPaths=name');
-    expect((opts as RequestInit).method).toBe('PATCH');
+    const firestoreUrl = calls(fetchMock)[1][0] as string;
+    const opts = calls(fetchMock)[1][1] as RequestInit;
+    expect(firestoreUrl).toContain('/workouts/wk1');
+    expect(firestoreUrl).toContain('updateMask.fieldPaths=name');
+    expect(opts.method).toBe('PATCH');
   });
 });
 
@@ -240,9 +242,10 @@ describe('FirebaseWorkoutClient — deleteWorkout', () => {
     const client = new FirebaseWorkoutClient(cfg);
     await expect(client.deleteWorkout('wk1')).resolves.toBeUndefined();
 
-    const [, [firestoreUrl, opts]] = (fetchMock as MockedFunction<typeof fetch>).mock.calls;
-    expect(String(firestoreUrl)).toContain('/workouts/wk1');
-    expect((opts as RequestInit).method).toBe('DELETE');
+    const firestoreUrl = calls(fetchMock)[1][0] as string;
+    const opts = calls(fetchMock)[1][1] as RequestInit;
+    expect(firestoreUrl).toContain('/workouts/wk1');
+    expect(opts.method).toBe('DELETE');
   });
 });
 
@@ -254,9 +257,7 @@ describe('FirebaseWorkoutClient — plans', () => {
     const client = new FirebaseWorkoutClient(cfg);
     await client.listPlans();
 
-    const [, firestoreUrl] = (fetchMock as MockedFunction<typeof fetch>).mock.calls.map(
-      ([url]) => url as string
-    );
+    const firestoreUrl = calls(fetchMock)[1][0] as string;
     expect(firestoreUrl).toContain('/plans');
   });
 
@@ -279,9 +280,10 @@ describe('FirebaseWorkoutClient — plans', () => {
     const client = new FirebaseWorkoutClient(cfg);
     await client.deletePlan('plan-1');
 
-    const [, [firestoreUrl, opts]] = (fetchMock as MockedFunction<typeof fetch>).mock.calls;
-    expect(String(firestoreUrl)).toContain('/plans/plan-1');
-    expect((opts as RequestInit).method).toBe('DELETE');
+    const firestoreUrl = calls(fetchMock)[1][0] as string;
+    const opts = calls(fetchMock)[1][1] as RequestInit;
+    expect(firestoreUrl).toContain('/plans/plan-1');
+    expect(opts.method).toBe('DELETE');
   });
 });
 
