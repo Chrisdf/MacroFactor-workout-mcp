@@ -60,7 +60,7 @@ interface FirestoreListResponse {
   nextPageToken?: string;
 }
 
-function toFirestoreValue(value: unknown): FirestoreValue {
+export function toFirestoreValue(value: unknown): FirestoreValue {
   if (value === null || value === undefined) return { nullValue: null };
   if (typeof value === 'boolean') return { booleanValue: value };
   if (typeof value === 'string') return { stringValue: value };
@@ -82,7 +82,7 @@ function toFirestoreValue(value: unknown): FirestoreValue {
   return { stringValue: String(value) };
 }
 
-function fromFirestoreValue(value: FirestoreValue): unknown {
+export function fromFirestoreValue(value: FirestoreValue): unknown {
   if ('nullValue' in value) return null;
   if ('booleanValue' in value) return value.booleanValue;
   if ('stringValue' in value) return value.stringValue;
